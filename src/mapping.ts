@@ -24,7 +24,7 @@ export function handleTransfer(event: Transfer): void {
   // withdraw
   else if(event.params._from.equals(VAULT_ADDRESS)) {
     let vault = getOrCreateVault(event.params._from);
-    vault.numGotchis = vault.numGotchis.plus(BigInt.fromI32(1));
+    vault.numGotchis = vault.numGotchis.minus(BigInt.fromI32(1));
     vault.save();
 
     store.remove("Aavegotchi", event.params._tokenId.toString())
