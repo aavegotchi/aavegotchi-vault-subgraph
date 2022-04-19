@@ -1,43 +1,75 @@
-import { BigInt, store } from "@graphprotocol/graph-ts"
+import { BigInt, store } from "@graphprotocol/graph-ts";
+import { Transfer, Contract } from "../generated/Contract/Contract";
 import {
-  Transfer
-} from "../generated/Contract/Contract"
-import { VAULT_ADDRESS } from "./constants"
-import { getOrCreateAavegotchi, getOrCreateOwner, getOrCreateVault } from "./helper"
+  GotchiVault,
+  OwnershipTransferred,
+} from "../generated/GotchiVault/GotchiVault";
+import { VAULT_ADDRESS } from "./constants";
+import {
+  getOrCreateAavegotchi,
+  getOrCreateOwner,
+  getOrCreateVault,
+} from "./helper";
 
 export function handleTransfer(event: Transfer): void {
   // deposit
-  if(event.params._to.equals(VAULT_ADDRESS)) {
-    let vault = getOrCreateVault(event.params._to);
-    let gotchi = getOrCreateAavegotchi(event.params._tokenId);
-    let owner = getOrCreateOwner(event.params._from);
-    gotchi.vault = vault.id;
-    gotchi.owner = owner.id;
-    gotchi.save();
+  if (event.params._to.equals(VAULT_ADDRESS)) {
+    let contract = GotchiVault.bind(VAULT_ADDRESS);
+    let depositor = contract.try_getDepositor(
+      event.address, //diamond contract
+      event.params._tokenId
+    );
 
-    vault.numGotchis = vault.numGotchis.plus(BigInt.fromI32(1));
-    vault.save();
+    //getDepositor function has been added
+    if (!depositor.reverted) {
+      let vault = getOrCreateVault(event.params._to);
+      let gotchi = getOrCreateAavegotchi(event.params._tokenId);
+      let owner = getOrCreateOwner(depositor.value);
+      gotchi.vault = vault.id;
+      gotchi.owner = owner.id;
+      gotchi.save();
 
-    owner.numGotchis = owner.numGotchis.plus(BigInt.fromI32(1));
-    owner.save();
-  } 
+      vault.numGotchis = vault.numGotchis.plus(BigInt.fromI32(1));
+      vault.save();
+
+      owner.numGotchis = owner.numGotchis.plus(BigInt.fromI32(1));
+      owner.save();
+    }
+
+    //getDepositor function probably wasn't added in yet
+    else {
+      let vault = getOrCreateVault(event.params._to);
+      let gotchi = getOrCreateAavegotchi(event.params._tokenId);
+      let owner = getOrCreateOwner(event.params._from);
+      gotchi.vault = vault.id;
+      gotchi.owner = owner.id;
+      gotchi.save();
+
+      vault.numGotchis = vault.numGotchis.plus(BigInt.fromI32(1));
+      vault.save();
+
+      owner.numGotchis = owner.numGotchis.plus(BigInt.fromI32(1));
+      owner.save();
+    }
+  }
   // withdraw
-  else if(event.params._from.equals(VAULT_ADDRESS)) {
+  else if (event.params._from.equals(VAULT_ADDRESS)) {
     let vault = getOrCreateVault(event.params._from);
     vault.numGotchis = vault.numGotchis.minus(BigInt.fromI32(1));
     vault.save();
 
-    store.remove("Aavegotchi", event.params._tokenId.toString())
-    
+    store.remove("Aavegotchi", event.params._tokenId.toString());
+
     let owner = getOrCreateOwner(event.params._to);
     owner.numGotchis = owner.numGotchis.minus(BigInt.fromI32(1));
-    if(owner.numGotchis.equals(BigInt.fromI32(0))) {
-      store.remove("Owner", owner.id)
+    if (owner.numGotchis.equals(BigInt.fromI32(0))) {
+      store.remove("Owner", owner.id);
     } else {
       owner.save();
     }
-    
   }
 }
 
 // export function handleUpdateItemPrice(event: UpdateItemPrice): void {}
+
+export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
