@@ -18,7 +18,32 @@ dataSources:
       abis:
         - name: Contract
           file: ./abis/Contract.json
+        - name: GotchiVault
+          file: ./abis/GotchiVault.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
+      file: ./src/mapping.ts
+  - kind: ethereum/contract
+    name: GotchiVault
+    network: matic
+    source:
+      address: "0xDd564df884Fd4e217c9ee6F65B4BA6e5641eAC63"
+      abi: GotchiVault
+      startBlock: 23448923
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+        - name: GotchiVault
+          file: ./abis/GotchiVault.json
+
+      eventHandlers:
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
       file: ./src/mapping.ts
