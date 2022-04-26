@@ -1,13 +1,12 @@
-name: Deploy to Prod
+name: Deploy to Hosted Service
 
 on:
   push:
     branches: master
 
 jobs:
-  deployProd:
+  deploy:
     runs-on: ubuntu-latest
-    environment: Prod
     steps:
       - uses: actions/checkout@v1
       - name: Install node
@@ -24,7 +23,7 @@ jobs:
         run: yarn build
       # - name: Run Unit Tests
       #   run: yarn test:unit
-      - name: Deploy to Prod
+      - name: Deploy to Hosted Service
         run: |
-          npx graph deploy --access-token ${{secrets.GRAPH_ACCESS_TOKEN}} froid1911/aavegotchi-vault subgraph.yaml --ipfs https://api.thegraph.com/ipfs/ --node ${{secrets.GRAPH_NODE}}
+          npx graph deploy --product hosted-service --access-token ${{secrets.GRAPH_ACCESS_TOKEN}} aavegotchi/gotchi-vault
         shell: bash
