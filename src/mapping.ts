@@ -12,7 +12,7 @@ import {
 } from "./helper";
 
 export function handleTransfer(event: Transfer): void {
-  // deposit
+  // deposit into vault
   if (event.params._to.equals(VAULT_ADDRESS)) {
     let contract = GotchiVault.bind(VAULT_ADDRESS);
     let depositor = contract.try_getDepositor(
@@ -52,7 +52,7 @@ export function handleTransfer(event: Transfer): void {
       owner.save();
     }
   }
-  // withdraw
+  // withdraw from vault
   else if (event.params._from.equals(VAULT_ADDRESS)) {
     let vault = getOrCreateVault(event.params._from);
     vault.numGotchis = vault.numGotchis.minus(BigInt.fromI32(1));
@@ -60,12 +60,24 @@ export function handleTransfer(event: Transfer): void {
 
     store.remove("Aavegotchi", event.params._tokenId.toString());
 
-    let owner = getOrCreateOwner(event.params._to);
-    owner.numGotchis = owner.numGotchis.minus(BigInt.fromI32(1));
-    if (owner.numGotchis.equals(BigInt.fromI32(0))) {
-      store.remove("Owner", owner.id);
-    } else {
-      owner.save();
+    let gotchi = getOrCreateAavegotchi(event.params._tokenId);
+    let currentOwner = gotchi.owner;
+
+    //Withdrawing from the Vault by original owner
+    if (currentOwner === event.params._to.toHexString()) {
+      let owner = getOrCreateOwner(event.params._to);
+      owner.numGotchis = owner.numGotchis.minus(BigInt.fromI32(1));
+
+      if (owner.numGotchis.equals(BigInt.fromI32(0))) {
+        store.remove("Owner", owner.id);
+      } else {
+        owner.save();
+      }
+    }
+
+    //Being lent out
+    else {
+      //do nothing?
     }
   }
 }
